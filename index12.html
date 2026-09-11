@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>메이트 타자연습</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, "Malgun Gothic", sans-serif;
+  background: linear-gradient(135deg, #eef7ff, #f7f0ff);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #263238;
+}
+
+.wrap {
+  width: min(900px, 94%);
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 15px 45px #0001;
+}
+
+h1 {
+  text-align: center;
+  margin: 0 0 8px;
+  font-size: 34px;
+}
+
+.sub {
+  text-align: center;
+  color: #78909c;
+  margin-bottom: 24px;
+}
+
+.modes {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #e8eef3;
+  color: #37474f;
+}
+
+button.active {
+  background: #4f8cff;
+  color: white;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.stat {
+  background: #f5f8fb;
+  border-radius: 15px;
+  padding: 13px;
+  text-align: center;
+}
+
+.stat b {
+  display: block;
+  font-size: 24px;
+  margin-top: 3px;
+}
+
+.target {
+  font-size: 24px;
+  line-height: 1.7;
+  background: #f8fbff;
+  border: 2px solid #e3edf7;
+  border-radius: 18px;
+  padding: 22px;
+  min-height: 130px;
+  margin-bottom: 15px;
+  word-break: keep-all;
+}
+
+.target span {
+  color: #b0bec5;
+}
+
+.target .done {
+  color: #4f8cff;
+}
+
+.target .wrong {
+  color: #e53935;
+  text-decoration: underline;
+}
+
+input {
+  width: 100%;
+  font-size: 22px;
+  padding: 17px;
+  border: 2px solid #d8e2ea;
+  border-radius: 15px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #4f8cff;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+#result {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 20px;
+  font-weight: bold;
+  min-height: 30px;
+}
+
+@media (max-width: 600px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .target {
+    font-size: 20px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <h1>⌨️ 메이트 타자연습</h1>
+  <div class="sub">빠르고 정확하게 입력해 보세요!</div>
+
+  <div class="modes">
+    <button class="active" onclick="setMode('초급', this)">🟢 초급</button>
+    <button onclick="setMode('중급', this)">🟡 중급</button>
+    <button onclick="setMode('고급', this)">🔴 고급</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      ⏱️ 시간
+      <b id="time">60</b>
+    </div>
+
+    <div class="stat">
+      ⚡ 속도
+      <b id="speed">0</b>
+    </div>
+
+    <div class="stat">
+      🎯 정확도
+      <b id="accuracy">100%</b>
+    </div>
+
+    <div class="stat">
+      🔥 콤보
+      <b id="combo">0</b>
+    </div>
+  </div>
+
+  <div id="target" class="target"></div>
+
+  <input
+    id="typing"
+    placeholder="여기에 문장을 입력하세요..."
+    autocomplete="off"
+    spellcheck="false"
+  >
+
+  <div class="actions">
+    <button onclick="restart()">🔄 다시 시작</button>
+  </div>
+
+  <div id="result"></div>
+
+</div>
+
+<script>
+
+const texts = {
+
+  "초급": [
+    "안녕하세요 반갑습니다.",
+    "오늘도 즐거운 하루입니다.",
+    "나는 타자연습을 합니다.",
+    "컴퓨터로 재미있는 일을 해 봅시다.",
+    "천천히 정확하게 입력해 보세요."
+  ],
+
+  "중급": [
+    "빠르게 입력하는 것보다 정확하게 입력하는 것이 더 중요합니다.",
+    "새로운 것을 배우면 할 수 있는 일이 점점 많아집니다.",
+    "매일 조금씩 연습하면 실력이 자연스럽게 좋아집니다.",
+    "좋은 아이디어가 떠오르면 직접 만들어 보는 것도 재미있습니다."
+  ],
+
+  "고급": [
+    "타자 실력은 꾸준한 연습으로 향상될 수 있으며 정확한 입력 습관이 빠른 속도보다 먼저입니다.",
+    "새로운 홈페이지를 만들 때에는 보기 좋은 디자인뿐만 아니라 사용하기 편한 화면과 알기 쉬운 메뉴도 중요합니다.",
+    "작은 도전이라도 포기하지 않고 계속 시도하다 보면 어느 순간 전보다 훨씬 능숙하게 해내고 있는 자신을 발견할 수 있습니다."
+  ]
+
+};
+
+let mode = "초급";
+let target = "";
+
+let startTime = null;
+let timer = null;
+
+let timeLeft = 60;
+let totalTyped = 0;
+let correct = 0;
+let combo = 0;
+let finished = false;
+
+const $ = id => document.getElementById(id);
+
+
+function setMode(m, btn) {
+
+  mode = m;
+
+  document
+    .querySelectorAll(".modes button")
+    .forEach(x => x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  restart();
+}
+
+
+function newText() {
+
+  const list = texts[mode];
+
+  target = list[Math.floor(Math.random() * list.length)];
+
+  render();
+
+}
+
+
+function render() {
+
+  const value = $("typing").value;
+
+  $("target").innerHTML =
+    [...target].map((char, i) => {
+
+      if (i < value.length) {
+
+        return `
+          <span class="${value[i] === char ? "done" : "wrong"}">
+            ${char}
+          </span>
+        `;
+
+      }
+
+      return `<span>${char}</span>`;
+
+    }).join("");
+
+}
+
+
+function restart() {
+
+  clearInterval(timer);
+
+  timer = null;
+  startTime = null;
+
+  timeLeft = 60;
+  totalTyped = 0;
+  correct = 0;
+  combo = 0;
+  finished = false;
+
+  $("typing").value = "";
+  $("typing").disabled = false;
+
+  $("time").textContent = "60";
+  $("speed").textContent = "0";
+  $("accuracy").textContent = "100%";
+  $("combo").textContent = "0";
+  $("result").textContent = "";
+
+  newText();
+
+  $("typing").focus();
+
+}
+
+
+function finish() {
+
+  if (finished) return;
+
+  finished = true;
+
+  clearInterval(timer);
+
+  timer = null;
+
+  $("typing").disabled = true;
+
+  const elapsed =
+    Math.max(1, (Date.now() - startTime) / 1000);
+
+  const wpm =
+    Math.round((correct / 5) / (elapsed / 60));
+
+  const accuracy =
+    totalTyped
+      ? Math.round(correct / totalTyped * 100)
+      : 100;
+
+  const oldBest =
+    Number(localStorage.getItem("mateTypingBest") || 0);
+
+  const best =
+    Math.max(oldBest, wpm);
+
+  localStorage.setItem("mateTypingBest", best);
+
+  $("speed").textContent = wpm;
+  $("accuracy").textContent = accuracy + "%";
+
+  $("result").innerHTML =
+    `🎉 끝! 속도 <b>${wpm} WPM</b>
+     · 정확도 <b>${accuracy}%</b>
+     · 최고 기록 <b>${best} WPM</b>`;
+
+}
+
+
+$("typing").addEventListener("input", () => {
+
+  if (finished) return;
+
+  if (!startTime) {
+
+    startTime = Date.now();
+
+    timer = setInterval(() => {
+
+      timeLeft--;
+
+      $("time").textContent = timeLeft;
+
+      const elapsed =
+        Math.max(1, (Date.now() - startTime) / 1000);
+
+      $("speed").textContent =
+        Math.round((correct / 5) / (elapsed / 60));
+
+      if (timeLeft <= 0) {
+        finish();
+      }
+
+    }, 1000);
+
+  }
+
+  const value = $("typing").value;
+
+  totalTyped = value.length;
+
+  correct =
+    [...value].filter(
+      (char, i) => char === target[i]
+    ).length;
+
+  const allCorrect =
+    value.length > 0 &&
+    [...value].every(
+      (char, i) => char === target[i]
+    );
+
+  combo =
+    allCorrect
+      ? Math.min(value.length, 99)
+      : 0;
+
+  $("combo").textContent = combo;
+
+  const accuracy =
+    totalTyped
+      ? Math.round(correct / totalTyped * 100)
+      : 100;
+
+  $("accuracy").textContent = accuracy + "%";
+
+  render();
+
+
+  // 문장을 전부 맞히면 다음 문장
+  if (value === target) {
+
+    $("typing").value = "";
+
+    totalTyped = 0;
+    correct = 0;
+    combo = 0;
+
+    $("combo").textContent = "0";
+
+    newText();
+
+  }
+
+});
+
+
+restart();
+
+</script>
+
+</body>
+</html>
